@@ -296,8 +296,12 @@ func handle() error {
 	return nil
 }
 
-func generateGKETestSkip(_ *testParameters) string {
-	skipString := "\\[Disruptive\\]|\\[Serial\\]"
+func generateGKETestSkip(testParams *testParameters) string {
+	skipString := "\\[Disruptive\\]"
+
+	if !strings.Contains(testParams.testFocus, "volume-expand") {
+		skipString += "|\\[Serial\\]"
+	}
 
 	// Lustre CSI driver does not support ephemeral volumes.
 	skipString += "|External.*Storage.*ephemeral"

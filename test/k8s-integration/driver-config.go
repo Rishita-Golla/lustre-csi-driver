@@ -78,6 +78,8 @@ func generateDriverConfigFile(testParams *testParameters, storageClassFile strin
 		"exec",
 		"RWX",
 		"multipods",
+		"controllerExpansion",
+		// "OnlineExpansion",
 	}
 
 	// Lustre instance takes in the order of minutes to be provisioned, and with dynamic provisioning (WaitForFirstCustomer policy),
@@ -90,8 +92,7 @@ func generateDriverConfigFile(testParams *testParameters, storageClassFile strin
 
 	minVolumeSize := "1Ti"
 	if testParams.gkeManagedDriver {
-		// TODO(rishitagolla): Update Prow tests to provision 9000 GiB instances once the underlying driver change is rolled out.
-		minVolumeSize = "18000Gi"
+		minVolumeSize = "9000Gi"
 	}
 
 	params := driverConfig{
