@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -456,7 +457,7 @@ func (s *nodeServer) mountGlobalIAM(volumeID, globalMountPath, principal, key st
 
 	// Perform secure mount with Workload Identity user credentials.
 	source := fmt.Sprintf("%s@tcp:/%s", ip, fsname)
-	userOpt := fmt.Sprintf("user=gke-wi://%s+%s", principal, key)
+	userOpt := fmt.Sprintf("user_principal=gke-wi://%s+%s", principal, key)
 	iamMountOptions := []string{userOpt}
 
 	if m := volCap.GetMount(); m != nil {
@@ -465,6 +466,12 @@ func (s *nodeServer) mountGlobalIAM(volumeID, globalMountPath, principal, key st
 				iamMountOptions = append(iamMountOptions, f)
 			}
 		}
+	}
+
+	// Ensure kernel tunable sptlrpc.gssiam.gssiam_upcall points to the symlink right before mounting.
+	cmd := exec.Command("/usr/sbin/lctl", "set_param", "sptlrpc.gssiam.gssiam_upcall=/etc/udev/l_gssiam_upcall")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		klog.Warningf("Failed to pre-configure kernel tunable sptlrpc.gssiam.gssiam_upcall before mount: %v, output: %s", err, string(output))
 	}
 
 	klog.V(5).Infof("mountGlobalIAM mounting volume %s to path %s on node %s with mountOptions %v", volumeID, globalMountPath, nodeName, iamMountOptions)
